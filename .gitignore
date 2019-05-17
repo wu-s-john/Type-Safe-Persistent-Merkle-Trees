@@ -1,0 +1,5 @@
+_build/*
+dune-project
+*.install
+.merlin
+*.code-workspace

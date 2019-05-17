@@ -1,0 +1,6 @@
+
+(library
+  (name merkle_tree)
+  (public_name merkle_tree)
+  (libraries core)
+  (preprocess (pps ppx_jane)))
