@@ -2,5 +2,5 @@
 (library
   (name merkle_tree)
   (public_name merkle_tree)
-  (libraries core)
+  (libraries core bigstring)
   (preprocess (pps ppx_jane)))
