@@ -3,9 +3,6 @@ open Core
 
 type z = Z
 
-type 'a s = 
-  | S : 'a  -> ('a s)
-
 module Peano = struct
 
   type 'a t =   
@@ -13,8 +10,6 @@ module Peano = struct
 
   type nonrec z = z
 end
-
-
 
 module Max_height = struct
   open Peano 
@@ -37,7 +32,6 @@ module Bounded_Peano = struct
   let rec to_int : type num remaining. (num, remaining) t -> int = function
     | Z -> 0
     | S prev -> 1 + to_int prev
-
 end
 
 module Bounded_vector = struct
@@ -46,7 +40,7 @@ module Bounded_vector = struct
   module T  = struct
     type ('elem, _, _) t =
       | [] : ('elem, Max_height.t, Peano.z) t
-      | ( :: ) : 'elem * ('elem, 'height Peano.t, 'depth) t  ->  ('elem, 'height, 'depth Peano.t) t
+      | ( :: ) : 'elem * ('elem, 'height Peano.t, 'depth) t ->  ('elem, 'height, 'depth Peano.t) t
   end
   include T 
 
@@ -115,8 +109,6 @@ module Bounded_vector = struct
       end)
 
     include Binable_vector
-
-
   end
 
   let bin_t : type height depth. (depth, height) Bounded_Peano.t -> ('a, ('a, height, depth) t) Bin_prot.Type_class.S1.t = 
@@ -245,8 +237,6 @@ module Location = struct
 
 
   include T
-
-  (* TODO: Make binable  *)
 
   let account_bin_t :  (Account.t, Max_height.t) t Bin_prot.Type_class.t =
     let bounded_vector = Bounded_vector.bin_t Bounded_Peano.max_value bin_bool in
