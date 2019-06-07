@@ -16,8 +16,35 @@ module Max_height = struct
   type nonrec t = z t t t
 end
 
-module Bounded_Peano = struct
+module Vector = struct
 
+  type ('elem, _) t =
+    | [] : ('elem, Peano.z) t
+    | ( :: ) : 'elem * ('elem, 'n) t ->  ('elem, 'n Peano.t) t
+
+
+  let three_elem_vector: (int, z Peano.t Peano.t Peano.t) t = [1; 2; 3]
+end
+
+module OneToThree = struct
+  type 'a t = 
+    | One : (Peano.z Peano.t)t
+    | Two : (Peano.z Peano.t Peano.t)t
+    | Three : (Peano.z Peano.t Peano.t Peano.t)t
+end
+
+module OneToThreeVector = struct
+  type nonrec ('elem, 'n) t = ('elem, 'n) Vector.t * 'n OneToThree.t
+
+  let x : (int, z Peano.t Peano.t Peano.t) t = 
+    Vector.([1; 2; 3]), Three
+
+  (* Will have a compiling error *)
+  let three_elem_vector_error : (int, z Peano.t Peano.t Peano.t) t = 
+    Vector.([1; 2; 3]), Two
+end
+
+module Bounded_Peano = struct
   type (_, _) t =   
     | Z: (Peano.z, Max_height.t) t
     | S : ('num, 'remaining Peano.t) t -> ('num Peano.t, 'remaining) t
@@ -149,6 +176,10 @@ module Merkle_address = struct
   let child : ('height Peano.t, 'depth) t -> bool -> ('height, 'depth Peano.t) t =
     fun xs x -> x :: xs
 
+  let sibling : ('height, 'depth Peano.t) t -> ('height, 'depth Peano.t) t =
+    function 
+    |  x::xs ->  (not x) :: xs
+
   (* TODO: This is really slow optimize *)
   let serialize (t : ('height, 'depth) t) =  
     Bounded_vector.fold_left t ~init:"" ~f:(fun x acc -> if x then String.concat ~sep:"" ["1"; acc] else String.concat ~sep:"" ["0"; acc] )
@@ -156,7 +187,13 @@ module Merkle_address = struct
   let bin_t : (('depth, 'height) Bounded_Peano.t) -> ('height, 'depth) t Bin_prot.Type_class.t = fun t -> 
     Bounded_vector.bin_t t Bool.bin_t
 
-  let to_cache : ('height, 'depth) t -> int * bool list =
+  let order_siblings : ('height, 'depth Peano.t) t -> ('height, 'depth Peano.t) t * ('height, 'depth Peano.t) t  = 
+    function
+    | (x :: _ as xs) -> 
+      if x then
+        (sibling xs, xs) else (xs, sibling xs)
+
+  let to_comparable : ('height, 'depth) t -> int * bool list =
     fun t -> 
     (Bounded_Peano.to_int @@ Bounded_vector.get_peano t, Bounded_vector.to_list t)
 
@@ -166,7 +203,7 @@ module Merkle_address = struct
       type t =
           E : ('height, 'depth) T.t -> t
 
-      let compare = Comparable.lift [%compare: (int * bool list)] ~f:(fun (E t) -> to_cache t )
+      let compare = Comparable.lift [%compare: (int * bool list)] ~f:(fun (E t) -> to_comparable t )
 
       let sexp_of_t : type height depth. t -> Sexp.t = fun ( E xs) -> sexp_of_t xs
 
@@ -177,6 +214,21 @@ module Merkle_address = struct
 
     include Comparable.Make(T)
 
+  end
+
+end
+
+module OneToThree = struct
+  type 'a t = 
+    | One : (Peano.z Peano.t)t
+    | Two : (Peano.z Peano.t Peano.t)t
+    | Three : (Peano.z Peano.t Peano.t Peano.t)t
+
+  module Vector = struct
+    type nonrec ('elem, 'height, 'depth) t =
+      ('elem, 'height, 'depth) Bounded_vector.t * 'depth t
+
+    let x: ('elem, 'height, 'depth) t = (Bounded_vector.([1; 2; 3]), (Three))
   end
 
 end
@@ -261,25 +313,15 @@ module Bigstring = struct
 end
 
 module Database_lookup = struct
-
-  (* TODO: small integer *)
-
   type _ t = 
     | Account_location : Public_key.t -> ((Account.t, Max_height.t) Location.t) t
     | Account : (Account.t, Max_height.t) Location.t -> Account.t t
     | Hash : (Hash.t, 'depth) Location.t -> Hash.t t
     | Last_allocated : ((Account.t, Max_height.t) Location.t) t
 
-  module Value = struct
-    type t =
-      | Account_location of ((Account.t, Max_height.t) Location.t)
-      | Hash of Hash.t
-      | Account of Account.t 
-  end
-
   module E = struct
-    type pair =
-        Pair : 'a t * 'a -> pair
+    type with_value =
+        With_value : 'a t * 'a -> with_value
   end
 
   let value_bin_t : type a. a t -> a Bin_prot.Type_class.t = function
@@ -326,45 +368,41 @@ let get : type a. t -> a Database_lookup.t -> a option =
   let value_bin_t = Database_lookup.value_bin_t key in
   value_bin_t.reader.read serialized_value ~pos_ref:(ref 0)
 
-let set_batch : t -> Database_lookup.E.pair list -> unit =
+let set_batch : t -> Database_lookup.E.with_value list -> unit =
   fun t ->
-  List.iter ~f:(fun (Database_lookup.E.Pair (key, value)) -> 
+  List.iter ~f:(fun (Database_lookup.E.With_value (key, value)) -> 
       let serialized_key = Database_lookup.serialize_key key  in
       let serialized_value = Database_lookup.serialize_value key value in
       Hashtbl.set t ~key:serialized_key ~data:serialized_value
     )
 
-
 type cache = Hash.t Merkle_address.E.Map.t
 type queue = (Hash.t * Merkle_address.E.t) Fqueue.t
 
-
-let iter_step : t -> (cache * queue)  -> ((Hash.t * Merkle_address.E.t), (cache * queue)) Sequence.Step.t =
-  fun t (map,  queue) -> 
-  match Fqueue.dequeue queue with
-  | None -> Done
-  | Some ((hash, E (merkle_path) ), tail) ->
-    match merkle_path with
-    | Bounded_vector.[] -> Yield ((hash, E (merkle_path) ), (map, tail) )
-    | (x::xs) -> 
-      (* TODO: check why sibling works akwardly herees
-      *)
-      let sibling = Merkle_address.child xs (not x) in
-      let (sibling_hash, new_map) = match Map.find map (E sibling) with
-        | None -> 
-          (* TODO: get default values for hashes *)
-
-          let sibling_hash = Option.value_exn (get t (Database_lookup.Hash (Location.Hash sibling ) ) )  in
-          let new_map = Map.set map ~key:(Merkle_address.E.E sibling) ~data:sibling_hash  in
-          (sibling_hash, new_map)
-        | Some sibling_hash -> 
-          (sibling_hash, map)
-      in
-      let parent_hash = if x then  (Hash.merge hash sibling_hash) else (Hash.merge sibling_hash hash) in
-      Yield ((hash, E (merkle_path) ), (Map.set new_map ~key:(Merkle_address.E.E xs) ~data:sibling_hash, Fqueue.enqueue tail (parent_hash, Merkle_address.E.E xs) ) )
-
-
-let compute_hashes t (hashes_to_compute: (Hash.t * (Account.t, Max_height.t) Location.t) sexp_list) =
+let compute_hashes t (hashes_to_compute: (Hash.t * (Account.t, Max_height.t) Location.t) list) =
+  let iter_step : t -> (cache * queue)  -> ((Hash.t * Merkle_address.E.t), (cache * queue)) Sequence.Step.t =
+    fun t (map,  queue) -> 
+      match Fqueue.dequeue queue with
+      | None -> Done
+      | Some ((hash, E (merkle_path) ), tail) ->
+        match merkle_path with
+        | Bounded_vector.[] -> Yield ((hash, E (merkle_path) ), (map, tail) )
+        | (x::xs) as location -> 
+          let sibling = Merkle_address.sibling location in
+          let (sibling_hash, new_map) = match Map.find map (E sibling) with
+            | None -> 
+              let sibling_hash = 
+                match (get t (Database_lookup.Hash (Location.Hash sibling ) ) ) with
+                | Some hash -> hash
+                | None -> default_hash sibling  in
+              let new_map = Map.set map ~key:(Merkle_address.E.E sibling) ~data:sibling_hash  in
+              (sibling_hash, new_map)
+            | Some sibling_hash -> 
+              (sibling_hash, map)
+          in
+          let parent_hash = if x then  (Hash.merge hash sibling_hash) else (Hash.merge sibling_hash hash) in
+          Yield ((hash, E (merkle_path) ), (Map.set new_map ~key:(Merkle_address.E.E xs) ~data:sibling_hash, Fqueue.enqueue tail (parent_hash, Merkle_address.E.E xs) ) ) 
+  in
   let map_input = List.map hashes_to_compute ~f:
       (fun (hash, Location.Account merkle_address) ->  
          (Merkle_address.E.E merkle_address, hash)
@@ -373,19 +411,62 @@ let compute_hashes t (hashes_to_compute: (Hash.t * (Account.t, Max_height.t) Loc
   let init = (Merkle_address.E.Map.of_alist_exn map_input, Fqueue.of_list queue_input )in
   let results = Sequence.to_list @@ Sequence.unfold_step ~init ~f:(iter_step t) in
   List.map results ~f:(fun (hash, Merkle_address.E.E merkle_path) -> 
+      Location.(  Database_lookup.E.With_value (Database_lookup.Hash (Location.Hash merkle_path), hash)   ) )
 
-      Location.(  Database_lookup.E.Pair (Database_lookup.Hash (Location.Hash merkle_path), hash)   ) )
 
-(* Need to modify height last_allocated *)
-(* TODO: compute if any of these things are greater than Last_allocated_address, then update it *)
-(* TODO: recompute last updated address *)
+let merkle_root : t -> Hash.t =
+  fun mdb -> 
+  match  (get mdb (Database_lookup.Hash (Location.Hash Bounded_vector.[] ) ) ) with
+  | None -> default_hash Bounded_vector.[] 
+  | Some hash -> hash
+
+let rec recompute_merkle_path : t -> (Hash.t * Merkle_address.E.t) list -> (Hash.t * Merkle_address.E.t) -> (Hash.t * Merkle_address.E.t) list  =
+  fun mdb acc -> 
+  function 
+  | Bounded_vector.(hash, E []) -> (hash, E []) :: acc
+  | (hash, E ((x::_) as path) ) -> 
+    let sibling = Merkle_address.sibling path in
+    let sibling_hash = 
+      match (get mdb (Database_lookup.Hash (Location.Hash sibling ) ) ) with
+      | Some hash -> hash
+      | None -> default_hash sibling  in
+    let parent_hash = if not x then
+        merge hash sibling_hash else merge sibling_hash hash in
+    let parent = Merkle_address.parent path in
+    recompute_merkle_path mdb ((hash, E path) :: acc) (parent_hash, E parent)
+
+
+let allocate_account : t -> Account.t -> unit = 
+  fun t account -> 
+  let (Account last_allocated) : (Account.t, Max_height.t) Location.t = Option.value_map (get t Database_lookup.Last_allocated) ~default:(Merkle_address.zero)
+      ~f:(fun (Location.Account merkle_address) -> Merkle_address.next merkle_address )
+  in
+  let account_hash = Account.hash account in
+  let computed_hashes = recompute_merkle_path t [] (account_hash, E last_allocated) in
+  let modified_changes = 
+    Database_lookup.E.With_value (Account (Account last_allocated), account) ::
+    Database_lookup.E.With_value (Account_location (account.public_key), (Account last_allocated)) ::
+    computed_hashes
+  in
+  set_batch t modified_changes
+
+
+
 let set_accounts : t -> (Account.t * (Account.t, Max_height.t) Location.t) list -> unit = 
   fun t accounts_with_locations -> 
   let hashes_to_compute = List.map accounts_with_locations ~f:(fun (account, location) ->  (Account.hash account, location) ) in
   let computed_hashes = compute_hashes t hashes_to_compute in
+  let last_allocated = Option.value_map (get t Database_lookup.Last_allocated) ~default:(Merkle_address.zero)
+      ~f:(fun (Location.Account merkle_address) -> Merkle_address.next merkle_address )
+  in
+  let max_location = 
+    List.fold ~init:last_allocated accounts_with_locations 
+      ~f:(fun last_allocated (_, Account merkle_address)  -> Merkle_address.max last_allocated merkle_address  )
+  in
   let modified_changes = 
-    List.map accounts_with_locations ~f:(fun (account, location) -> Database_lookup.E.Pair (Account location, account)) @
-    List.map accounts_with_locations ~f:(fun (account, location) -> Database_lookup.E.Pair (Account_location (account.public_key), location)) @
+    Database_lookup.E.With_value (Database_lookup.Last_allocated, max_location)::
+    List.map accounts_with_locations ~f:(fun (account, location) -> Database_lookup.E.With_value (Account location, account)) @
+    List.map accounts_with_locations ~f:(fun (account, location) -> Database_lookup.E.With_value (Account_location (account.public_key), location)) @
     computed_hashes
   in
   set_batch t modified_changes
