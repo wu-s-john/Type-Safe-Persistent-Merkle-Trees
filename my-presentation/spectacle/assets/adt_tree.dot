@@ -1,0 +1,12 @@
+
+
+digraph {
+     2 -> 1
+     2 -> leaf2
+     1 -> leaf1
+     1 -> 3
+
+     leaf2 [label=""];
+     leaf1 [label=""]
+
+}

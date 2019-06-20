@@ -1,0 +1,54 @@
+digraph {
+    h21 -> a1;
+    h22 -> a2;
+    h23 -> a3;
+    h24 -> a4;
+
+    h11 -> h21;
+    h11 -> h22;
+    h12 -> h23;
+    h12 -> h24;
+
+    root -> h11;
+    root -> h12;
+    
+    splines=line;
+    subgraph cluster_2 {
+            node [shape=square];
+            h21; h22; h23; h24;
+            label="depth2"
+    }
+
+    subgraph cluster_1 {
+            node [shape=square];
+            h11; h12;
+            label="depth1"
+    }
+    
+    subgraph cluster_0 {
+            node [shape=square];
+            root
+            label="root"
+    }
+
+    subgraph cluster_account {
+            label="accounts"
+            a1; a2; a3; a4;
+    }
+    
+    a1[ style=filled fillcolor=yellow shape=rectangle label="Account1" ];
+    a2[ style=filled fillcolor=yellow shape=rectangle label="Account2" ];
+    a3[ style=filled fillcolor=yellow shape=rectangle label="Account3"];
+    a4[ style=filled fillcolor=yellow shape=rectangle label="Account4"];
+
+    h21 [style=filled fillcolor=grey shape=rectangle label="H1"];
+    h22 [style=filled fillcolor=grey shape=rectangle label="H2"];
+    h23 [style=filled fillcolor=grey shape=rectangle label="H3"];
+    h24 [style=filled fillcolor=grey shape=rectangle label="H4"];
+
+    h11 [style=filled fillcolor=grey shape=rectangle label="H12"];
+    h12 [style=filled fillcolor=grey shape=rectangle label="H34"];
+    root [style=filled fillcolor=grey shape=rectangle label="H1234"];
+    
+    node [shape=rectangle];
+}

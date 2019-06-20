@@ -3,3 +3,5 @@ dune-project
 *.install
 .merlin
 *.code-workspace
+my-presentation/spectacle/dist/*
+my-presentation/spectacle/node_modules/*

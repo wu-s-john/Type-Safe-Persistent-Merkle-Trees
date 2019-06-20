@@ -14,27 +14,22 @@ module Tree = struct
     | Node of 'a t * 'a * 'a t
 end
 
-
-(* EXAMPLE:  *)
-
-(**
-      2
-    /   \
-   1
-     \
-       3
-*)
-
 open Tree
-
 let my_tree = 
   Node ((Node (Leaf, 1, Node (Leaf, 3, Leaf)) ), 2, Leaf)
-
-
-(* What happens if we want to have trees that are perfectly balanced  *)
-
 
 let get_value = 
   function 
   | Node (_, x, _) -> Some x
   | Leaf -> None
+
+let get_child = 
+  function (Leaf, _) -> None
+  | (Node (l, _, _), `Left) -> Some l
+  | (Node (_, _, r), `Right) -> Some r
+
+
+
+
+
+
