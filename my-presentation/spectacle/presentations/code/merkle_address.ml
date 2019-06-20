@@ -1,10 +1,14 @@
 module Merkle_address = struct
   type ('height, 'depth) t = (bool, 'height, 'depth) Bounded_vector.t
 
+  let path1 = [false; true]
+
+  let path2 = [false]
+  
   let parent : ('height, 'depth Peano.t) t -> ('height Peano.t, 'depth) t = 
     function
     | _::xs -> xs
-  
+
   let child : ('height Peano.t, 'depth) t -> bool -> ('height, 'depth Peano.t) t =
     fun xs x -> x :: xs
 
@@ -21,11 +25,7 @@ module Merkle_address = struct
     end
 
     include T
+
+    let example = [(E [false; true]);  (E [true])]
   end
 end
-
-open Merkle_address
-
-let path1 = [false; true]
-
-let path2 = [true]

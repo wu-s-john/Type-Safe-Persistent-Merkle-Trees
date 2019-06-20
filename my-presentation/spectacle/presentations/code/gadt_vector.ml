@@ -1,7 +1,7 @@
 module Vector = struct
   type ('elem, 'size) t =
     | [] : ('elem, Peano.z) t
-    | ( :: ) : 'elem * ('elem, 'n) t ->  ('elem, 'n Peano.t) t
+    | ( :: ) : 'elem * ('elem, 'height) t ->  ('elem, 'height Peano.t) t
 end
 
 let three_elem_vector: (int, Peano.z Peano.t Peano.t Peano.t) Vector.t = [1; 2; 3]
@@ -12,11 +12,11 @@ module Max_height = struct
 end
 
 module Bounded_vector = struct
-  type ('elem, _, _) t =
+  type ('elem, 'remaining, 'size) t =
     | [] : ('elem, Max_height.t, Peano.z) t
-    | ( :: ) : 'elem * ('elem, 'height Peano.t, 'depth) t ->  ('elem, 'height, 'depth Peano.t) t
+    | ( :: ) : 'elem * ('elem, 'remaining Peano.t, 'size) t ->  ('elem, 'remaining, 'size Peano.t) t
 end
 
-let valid_vector = [1; 2; 3]
+let valid_bounded_vector : (_, Peano.z Peano.t, Peano.z Peano.t Peano.t Peano.t) Bounded_vector.t = [1; 2; 3]
 
-let illegal_vector = [1; 2; 3; 4; 5]
+let illegal_bounded_vector : (_, _, _) Bounded_vector.t = [1; 2; 3; 4; 5]

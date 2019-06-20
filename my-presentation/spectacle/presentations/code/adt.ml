@@ -2,12 +2,6 @@ type 'a option =
     Some of 'a
   | None
 
-module Either = struct
-  type 'a t = 
-      First of 'a |
-      Second of 'a
-end
-
 module Tree = struct
   type 'a t = 
     | Leaf 
@@ -15,7 +9,7 @@ module Tree = struct
 end
 
 open Tree
-let my_tree = 
+let example_tree = 
   Node ((Node (Leaf, 1, Node (Leaf, 3, Leaf)) ), 2, Leaf)
 
 let get_value = 
@@ -27,6 +21,16 @@ let get_child =
   function (Leaf, _) -> None
   | (Node (l, _, _), `Left) -> Some l
   | (Node (_, _, r), `Right) -> Some r
+
+
+
+
+
+
+
+
+
+
 
 
 

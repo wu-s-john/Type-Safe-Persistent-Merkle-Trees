@@ -10,10 +10,10 @@ let three : Peano.z Peano.t Peano.t Peano.t =
   S (S (S Z))
 
 module Balanced_tree = struct
-  type ('a, _) t =
+  type ('a, 'height) t =
     | Leaf : ('a, Peano.z) t
-    | Node : ('a, 'n) t * 'a * ('a, 'n) t -> 
-        ('a, 'n Peano.t) t
+    | Node : ('a, 'height) t * 'a * ('a, 'height) t -> 
+        ('a, 'height Peano.t) t
 end
 
 let example =
@@ -42,4 +42,4 @@ let get_child : ('a, 'n Peano.t) Balanced_tree.t -> [`Left | `Right] -> ('a, 'n)
 
 
 
-9
+
