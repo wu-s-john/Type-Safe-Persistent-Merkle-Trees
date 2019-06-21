@@ -34,6 +34,7 @@ require('prismjs/components/prism-ocaml');
 require("normalize.css");
 require("spectacle/lib/themes/default/index.css");
 
+
 const theme = createTheme(
   {
     primary: '#03A9FC',
@@ -66,12 +67,14 @@ export default class Presentation extends React.Component {
         <Deck transition={["zoom", "slide"]} transitionDuration={500}>
           <Slide transition={['zoom']} bgColor="primary">
             <Heading size={4} caps lineHeight={1} textColor="secondary">
-              Designing More Secure Cryptographic Datastructures:
+              Designing Secure Cryptographic Data Structures:
           </Heading>
             <Heading size={4} caps lineHeight={1} textColor="secondary">
               A "More" Type-Safe Persistent Merkle Tree
           </Heading>
-
+          <Text margin="10px 0 0" textColor="primary" size={1} bold>
+           _
+          </Text>
             <Text margin="10px 0 0" textColor="tertiary" size={1} bold>
               John Wu
           </Text>
@@ -83,7 +86,7 @@ export default class Presentation extends React.Component {
           </Text>
           </Slide>
           <Slide transition={["slide", "fade"]} bgColor="primary">
-            <ImageSlide image={images.merkle_tree_account} title="Merkle Tree" />
+            <ImageSlide image={images.merkle_tree_account} title="What is a Merkle Tree?" />
           </Slide>
           <Slide transition={["slide", "fade"]} bgColor="primary">
             <ImageSlide image={images.merkle_tree_h2} title="Compute the hash of the accounts" />
@@ -92,7 +95,7 @@ export default class Presentation extends React.Component {
             <ImageSlide image={images.merkle_tree_h1} title="Compute the hash of the leaves" />
           </Slide>
           <Slide transition={["slide", "fade"]} bgColor="primary">
-            <ImageSlide image={images.merkle_tree_root} title="Compute the hash of the leaves" />
+            <ImageSlide image={images.merkle_tree_root} title="Compute the hash of the parent nodes" />
           </Slide>
           <Slide transition={["slide", "fade"]} bgColor="primary">
             <ImageSlide image={images.merkle_tree_update_h2} title="Make Updates to an account" />
@@ -101,13 +104,13 @@ export default class Presentation extends React.Component {
             <ImageSlide image={images.merkle_tree_update_h1} title="Make Updates to inner node" />
           </Slide>
           <Slide transition={["slide", "fade"]} bgColor="primary">
-            <ImageSlide image={images.merkle_tree_update_root} title="Make update until the root is updated" />
+            <ImageSlide image={images.merkle_tree_update_root} title="Make updates until the root is updated" />
           </Slide>
           <Slide transition={["slide", "fade"]} bgColor="primary">
             <Heading size={4} caps lineHeight={1} textColor="secondary">
               Requirements:
             </Heading>
-            <Text textColor="secondary" size={1}>Create an elegant implementation of a Merkle Tree Persistent Database where all operations are as fast as possible and all writes are atomic</Text>
+            <Text textColor="tertiary" size={1}>Create an elegant implementation of a Merkle Tree Persistent Database where all writes are atomic</Text>
           </Slide>
           <CodeSlide
             
@@ -115,7 +118,7 @@ export default class Presentation extends React.Component {
             lang="ocaml"
             code={require("raw-loader!./code/adt.ml")}
             ranges={[
-              { loc: [0, 40], title: "Algebraic Data Types (ADT)" },
+              { loc: [0, 41], title: "Algebraic Data Types (ADT)" },
               { loc: [0, 3] },
               { loc: [4, 9] },
               { loc: [10, 13] },
@@ -137,10 +140,10 @@ export default class Presentation extends React.Component {
               { loc: [0, 59], title: "Generalized Algebraic Data Types (GADT)" },
               { loc: [0, 6], note: "'a is restricted to a certain type" },
               { loc: [7, 10], note: "3 is represented at the type level", textColor: "tertiary" },
-              { loc: [11, 17], note:"'a is the type of all elements, 'height is the constrained to be only natural number types" },
+              { loc: [11, 17], note:"'a is the type of all elements, _ is the constrained to be only natural number types" },
               { loc: [18, 31] },
               { loc: [18, 31], image: images.balanced_tree },
-              { loc: [32, 51] }
+              { loc: [32, 45], note: "total functions without having to match on Leaf" }
             ]}
           />
           <CodeSlide
@@ -162,14 +165,12 @@ export default class Presentation extends React.Component {
             code={require("raw-loader!./code/merkle_address.ml")}
             ranges={[
               { loc: [0, 32], title: "Merkle Address: Path of a merkle tree" },
-              { loc: [1, 2] },
-              { loc: [3, 4] },
-              { loc: [3, 4], image: images.merkle_address_1 },
-              { loc: [5, 6] },
-              { loc: [5, 6], image: images.merkle_address_2 },
-              { loc: [7, 17], note: "These methods are total" },
-              { loc: [20, 27], note: "Existential type" },
-              { loc: [28, 29], note: "Existential type Example" },
+              { loc: [1, 13], note: "These methods are total" },
+              { loc: [15, 24], note: "Existential type" },
+              { loc: [28, 29] },
+              { loc: [28, 29], image: images.merkle_address_1 },
+              { loc: [30, 31] },
+              { loc: [30, 31], image: images.merkle_address_2 },
               {}
             ]}
           />
