@@ -25,7 +25,7 @@ digraph {
     h24 [style=filled fillcolor=lightblue shape=rectangle label="H4\nH(A4)"];
 
     h11 [ style=filled fillcolor=grey shape=rectangle label="H12\nH(H1, H2)"];
-    h12 [ style=filled fillcolor=green shape=rectangle label="H34'\nH(H3', H4)"];
+    h12 [ style=filled fillcolor=green shape=rectangle label="H3'4\nH(H3', H4)"];
     root [ style=filled fillcolor=grey shape=rectangle label="H1234\nH(H12, H34)"];
     
     node [shape=rectangle];

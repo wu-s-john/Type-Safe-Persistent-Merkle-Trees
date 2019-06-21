@@ -34,9 +34,14 @@ require('prismjs/components/prism-ocaml');
 require("normalize.css");
 require("spectacle/lib/themes/default/index.css");
 
-const theme = createTheme({
-  primary: "#ff4081"
-});
+const theme = createTheme(
+  {
+    primary: '#03A9FC',
+    secondary: 'white',
+    tertiary: '#1F2022',
+    quaternary: '#CECECE',
+  }
+);
 
 
 const images = {
@@ -99,12 +104,13 @@ export default class Presentation extends React.Component {
             <ImageSlide image={images.merkle_tree_update_root} title="Make update until the root is updated" />
           </Slide>
           <Slide transition={["slide", "fade"]} bgColor="primary">
-            <Heading size={4} caps lineHeight={1} textColor="tertiary">
+            <Heading size={4} caps lineHeight={1} textColor="secondary">
               Requirements:
             </Heading>
-            <Text textColor="tertiary" size={1}>Create an elegant implementation of a Merkle Tree Persistent Database where all operations are as fast as possible and all writes are atomic</Text>
+            <Text textColor="secondary" size={1}>Create an elegant implementation of a Merkle Tree Persistent Database where all operations are as fast as possible and all writes are atomic</Text>
           </Slide>
           <CodeSlide
+            
             transition={["slide", "fade"]}
             lang="ocaml"
             code={require("raw-loader!./code/adt.ml")}
@@ -114,11 +120,11 @@ export default class Presentation extends React.Component {
               { loc: [4, 9] },
               { loc: [10, 13] },
               { loc: [10, 13], image: images.adt_tree },
-              {loc : [14, ] }
+              {loc : [14, 30] }
             ]}
           />
           <Slide transition={["fade"]} textColor="primary">
-            <Heading size={4} caps lineHeight={1} textColor="tertiary">
+            <Heading size={4} caps lineHeight={1} textColor="secondary">
               What if we want a Balanced Tree?
             </Heading>
             <Image src={images.balanced_tree}></Image>
@@ -182,12 +188,12 @@ export default class Presentation extends React.Component {
           />
           <Slide transition={["fade"]} textColor="primary">
             <Appear fid="1">
-              <Text margin="10px 0 0" textColor="tertiary" size={1} bold>
+              <Text margin="10px 0 0" textColor="secondary" size={1} bold>
                 Merkle Tree State
           </Text>
             </Appear>
             <Appear fid="2">
-            <List textColor="tertiary" size={4} bold>
+            <List textColor="secondary" size={4} bold>
               <ListItem>Accounts</ListItem>
               <ListItem>Addresses to Accounts</ListItem>
               <ListItem>Hashes and their Address</ListItem>
@@ -195,7 +201,7 @@ export default class Presentation extends React.Component {
             </List>
             </Appear>
             <Appear fid="3">
-              <Text margin="10px 0 0" textColor="tertiary" size={1} bold>
+              <Text margin="10px 0 0" textColor="secondary" size={1} bold>
                 We can store all of this in a Key-Value Database
           </Text>
             </Appear>
